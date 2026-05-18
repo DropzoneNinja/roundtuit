@@ -2,31 +2,31 @@
 
 ## Phase 1: Repository & Project Scaffolding
 
-- [ ] 1.1 Create project root directory with the target folder structure (`frontend/`, `backend/`, `docker/`, `postgres/`, `nginx/`)
-- [ ] 1.2 Initialize a root-level `.gitignore` covering `node_modules/`, `.env*`, `dist/`, `*.log`
-- [ ] 1.3 Initialize git repository and make initial commit
-- [ ] 1.4 Create root `.env.example` documenting every required variable (`DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `NODE_ENV`, `PORT`, `FRONTEND_URL`, `VITE_API_URL`)
-- [ ] 1.5 Create `backend/` Node.js + TypeScript project: `npm init`, install dependencies (`express`/`fastify`, `prisma`, `@prisma/client`, `zod`, `argon2`, `jsonwebtoken`, `pino`, `pino-http`, `cors`, `helmet`, `express-rate-limit`, `cookie-parser`), install dev dependencies (`typescript`, `ts-node-dev`, `@types/*`)
-- [ ] 1.6 Create `backend/tsconfig.json` targeting ES2022, `moduleResolution: bundler`, `strict: true`, `outDir: dist/`
-- [ ] 1.7 Create `frontend/` Vite + React + TypeScript project via `npm create vite@latest frontend -- --template react-ts`
-- [ ] 1.8 Install frontend dependencies: `react-router-dom`, `@tanstack/react-query`, `react-hook-form`, `@hookform/resolvers`, `zod`, `axios`, `lucide-react`
-- [ ] 1.9 Install and initialise Tailwind CSS in `frontend/` (`tailwind.config.ts`, `postcss.config.js`, import in `index.css`)
-- [ ] 1.10 Initialise shadcn/ui in `frontend/` (`npx shadcn-ui@latest init`), choose CSS variables theme, set base color and radius
-- [ ] 1.11 Add shadcn/ui components needed for the project: `button`, `card`, `input`, `label`, `textarea`, `select`, `checkbox`, `badge`, `dialog`, `dropdown-menu`, `form`, `toast`, `skeleton`, `separator`, `tooltip`
+- [x] 1.1 Create project root directory with the target folder structure (`frontend/`, `backend/`, `docker/`, `postgres/`, `nginx/`)
+- [x] 1.2 Initialize a root-level `.gitignore` covering `node_modules/`, `.env*`, `dist/`, `*.log`
+- [x] 1.3 Initialize git repository and make initial commit
+- [x] 1.4 Create root `.env.example` documenting every required variable (`DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `NODE_ENV`, `PORT`, `FRONTEND_URL`, `VITE_API_URL`)
+- [x] 1.5 Create `backend/` Node.js + TypeScript project: `npm init`, install dependencies (`express`/`fastify`, `prisma`, `@prisma/client`, `zod`, `argon2`, `jsonwebtoken`, `pino`, `pino-http`, `cors`, `helmet`, `express-rate-limit`, `cookie-parser`), install dev dependencies (`typescript`, `ts-node-dev`, `@types/*`)
+- [x] 1.6 Create `backend/tsconfig.json` targeting ES2022, `moduleResolution: bundler`, `strict: true`, `outDir: dist/`
+- [x] 1.7 Create `frontend/` Vite + React + TypeScript project via `npm create vite@latest frontend -- --template react-ts`
+- [x] 1.8 Install frontend dependencies: `react-router-dom`, `@tanstack/react-query`, `react-hook-form`, `@hookform/resolvers`, `zod`, `axios`, `lucide-react`
+- [x] 1.9 Install and initialise Tailwind CSS in `frontend/` (`tailwind.config.ts`, `postcss.config.js`, import in `index.css`)
+- [x] 1.10 Initialise shadcn/ui in `frontend/` (`npx shadcn-ui@latest init`), choose CSS variables theme, set base color and radius
+- [x] 1.11 Add shadcn/ui components needed for the project: `button`, `card`, `input`, `label`, `textarea`, `select`, `checkbox`, `badge`, `dialog`, `dropdown-menu`, `form`, `sonner`, `skeleton`, `separator`, `tooltip`
 
 ---
 
 ## Phase 2: Database Schema & Migrations
 
-- [ ] 2.1 Create `backend/prisma/schema.prisma` with `datasource db` pointing to `DATABASE_URL` and `generator client`
-- [ ] 2.2 Define `AllowedEmail` model: `id` (cuid), `email` (String, unique), `createdAt` (DateTime, default now)
-- [ ] 2.3 Define `User` model: `id` (cuid), `email` (String, unique), `passwordHash` (String), `createdAt` (DateTime, default now), `updatedAt` (DateTime, updatedAt), relation to `Task[]`
-- [ ] 2.4 Define `Task` model: `id` (cuid), `title` (String), `description` (String?), `dueDate` (DateTime?), `importance` (enum `Importance`), `completed` (Boolean, default false), `completedAt` (DateTime?), `createdBy` (FK to `User.id`), `createdAt` (DateTime, default now), `updatedAt` (DateTime, updatedAt)
-- [ ] 2.5 Add Prisma `enum Importance { HIGH MEDIUM LOW }` block
-- [ ] 2.6 Run `npx prisma migrate dev --name init` to generate and apply the first migration
-- [ ] 2.7 Create `backend/prisma/seed.ts` that inserts the two allowed household emails into `AllowedEmail`
-- [ ] 2.8 Configure `prisma/seed.ts` in `package.json` under `"prisma": { "seed": "ts-node prisma/seed.ts" }` and run `npx prisma db seed`
-- [ ] 2.9 Verify schema by inspecting `npx prisma studio` and confirming all tables and columns match the spec
+- [x] 2.1 Create `backend/prisma/schema.prisma` with `datasource db` pointing to `DATABASE_URL` and `generator client`
+- [x] 2.2 Define `AllowedEmail` model: `id` (cuid), `email` (String, unique), `createdAt` (DateTime, default now)
+- [x] 2.3 Define `User` model: `id` (cuid), `email` (String, unique), `passwordHash` (String), `createdAt` (DateTime, default now), `updatedAt` (DateTime, updatedAt), relation to `Task[]`
+- [x] 2.4 Define `Task` model: `id` (cuid), `title` (String), `description` (String?), `dueDate` (DateTime?), `importance` (enum `Importance`), `completed` (Boolean, default false), `completedAt` (DateTime?), `createdBy` (FK to `User.id`), `createdAt` (DateTime, default now), `updatedAt` (DateTime, updatedAt)
+- [x] 2.5 Add Prisma `enum Importance { HIGH MEDIUM LOW }` block
+- [x] 2.6 Run `npx prisma migrate dev --name init` to generate and apply the first migration
+- [x] 2.7 Create `backend/prisma/seed.ts` that inserts the two allowed household emails into `AllowedEmail`
+- [x] 2.8 Configure seed in `prisma.config.ts` under `migrations.seed` (Prisma 7) and run `npx prisma db seed`
+- [x] 2.9 Verified schema via `psql \d` — all tables and columns match spec, seed data confirmed
 
 ---
 
