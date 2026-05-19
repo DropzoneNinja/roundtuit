@@ -16,9 +16,7 @@ services:
     restart: unless-stopped
 
   backend:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.backend
+    image: ghcr.io/dropzoneninja/roundtuit-backend:latest
     volumes:
       - ${BACKUP_DIR:?BACKUP_DIR is required}:/app/backups
     environment:
@@ -40,11 +38,8 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  # nginx builds the frontend and serves static files + proxies /api to backend
   nginx:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile.frontend
+    image: ghcr.io/dropzoneninja/roundtuit-frontend:latest
     ports:
       - "80:80"
       - "443:443"
