@@ -30,3 +30,9 @@ Thumbs.db
 
 # Docker
 postgres/data/
+
+# Backups
+backups/
+
+# Claude Code
+.claude/

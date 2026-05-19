@@ -477,6 +477,56 @@ The project is complete when:
 
 ---
 
+# Production Deployment Checklist
+
+## First-time setup
+
+1. **Generate secrets**
+   ```bash
+   openssl rand -hex 32   # use as JWT_SECRET
+   openssl rand -hex 16   # use as POSTGRES_PASSWORD
+   ```
+
+2. **Copy and fill in environment variables**
+   ```bash
+   cp .env.example .env
+   # Edit .env — set DATABASE_URL, JWT_SECRET, FRONTEND_URL, POSTGRES_PASSWORD
+   cp backend/.env.example backend/.env   # optional, values come from compose env
+   ```
+
+3. **Configure SSL certificates**
+   - Edit `nginx/prod.conf` — replace `YOUR_DOMAIN_HERE` and the two `ssl_certificate*` paths.
+   - If using Let's Encrypt, run `certbot` first and point to `/etc/letsencrypt/live/YOUR_DOMAIN/`.
+   - Mount your cert directory into the nginx service in `docker-compose.prod.yml` if needed.
+
+4. **Add allowed emails to the database**
+   ```bash
+   # After the stack is running, exec into the backend container:
+   docker compose -f docker-compose.prod.yml exec backend npx prisma db seed
+   # Or insert directly via psql
+   ```
+
+## Deploy
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+```
+
+## Verify
+
+- `GET https://yourdomain.com/api/health` → `{ "status": "ok" }`
+- Register with an allowlisted email → succeeds
+- Create, complete, and delete a task
+
+## Subsequent deploys (update)
+
+```bash
+docker compose -f docker-compose.prod.yml up -d --build
+# Migrations run automatically via the backend entrypoint
+```
+
+---
+
 # Development Philosophy
 
 This project should prioritize:

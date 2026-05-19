@@ -6,21 +6,18 @@ const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
 const prisma = new PrismaClient({ adapter });
 
-const ALLOWED_EMAILS = [
-  "wife@example.com",
-  "husband@example.com",
-];
+const ALLOWED_USERNAMES = ["Irina", "Mike"];
 
 async function main() {
-  console.log("Seeding allowed emails...");
+  console.log("Seeding allowed usernames...");
 
-  for (const email of ALLOWED_EMAILS) {
-    await prisma.allowedEmail.upsert({
-      where: { email },
+  for (const username of ALLOWED_USERNAMES) {
+    await prisma.allowedUsername.upsert({
+      where: { username },
       update: {},
-      create: { email },
+      create: { username },
     });
-    console.log(`  ✓ ${email}`);
+    console.log(`  ✓ ${username}`);
   }
 
   console.log("Seed complete.");
