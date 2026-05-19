@@ -4,6 +4,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { z } from 'zod';
+import { passwordSchema } from '../schemas/auth';
 import prisma from '../lib/prisma';
 import { authenticate } from '../middleware/authenticate';
 import { config } from '../config';
@@ -61,7 +62,7 @@ router.post('/reset-password', async (req: Request, res: Response, next: NextFun
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1),
-  newPassword: z.string().min(8, 'Password must be at least 8 characters'),
+  newPassword: passwordSchema,
 });
 
 router.post('/change-password', async (req: Request, res: Response, next: NextFunction) => {

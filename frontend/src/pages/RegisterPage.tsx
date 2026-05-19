@@ -9,6 +9,7 @@ import { registerSchema, type RegisterInput } from '@/lib/authSchemas';
 import { register } from '@/api/auth';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { PasswordRules } from '@/components/ui/PasswordRules';
 import {
   Form,
   FormControl,
@@ -31,6 +32,7 @@ export default function RegisterPage() {
   });
 
   const { isSubmitting } = form.formState;
+  const passwordValue = form.watch('password');
 
   async function onSubmit(data: RegisterInput) {
     try {
@@ -86,6 +88,7 @@ export default function RegisterPage() {
                   {...field}
                 />
               </FormControl>
+              <PasswordRules value={passwordValue} />
               <FormMessage />
             </FormItem>
           )}

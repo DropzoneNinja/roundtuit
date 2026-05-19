@@ -8,6 +8,7 @@ import { z } from 'zod';
 import { Loader2, KeyRound } from 'lucide-react';
 import { changePassword } from '@/api/settings';
 import { useAuthStore } from '@/store/authStore';
+import { PasswordRules } from '@/components/ui/PasswordRules';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,7 +24,11 @@ import {
 const schema = z
   .object({
     currentPassword: z.string().min(1, 'Current password is required'),
-    newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+    newPassword: z
+      .string()
+      .min(12, 'Password must be at least 12 characters')
+      .regex(/[A-Z]/, 'Password must contain at least one uppercase letter')
+      .regex(/[0-9]/, 'Password must contain at least one number'),
     confirmPassword: z.string(),
   })
   .refine((d) => d.newPassword === d.confirmPassword, {
@@ -48,6 +53,7 @@ export default function ChangePasswordPage() {
   });
 
   const { isSubmitting } = form.formState;
+  const newPasswordValue = form.watch('newPassword');
 
   async function onSubmit(data: FormValues) {
     try {
@@ -112,6 +118,7 @@ export default function ChangePasswordPage() {
                         {...field}
                       />
                     </FormControl>
+                    <PasswordRules value={newPasswordValue} />
                     <FormMessage />
                   </FormItem>
                 )}
