@@ -350,11 +350,13 @@ function BackupSection() {
                 </p>
               </div>
               <div className="flex gap-1 shrink-0">
-                <Button size="icon" variant="ghost" className="size-7" asChild>
-                  <a href={backupDownloadUrl(b.filename)} download={b.filename}>
-                    <Download className="size-3.5" />
-                  </a>
-                </Button>
+                <a
+                  href={backupDownloadUrl(b.filename)}
+                  download={b.filename}
+                  className="inline-flex items-center justify-center size-7 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  <Download className="size-3.5" />
+                </a>
                 <Button
                   size="icon"
                   variant="ghost"
@@ -476,7 +478,7 @@ function RestoreSection() {
             <p className="text-sm text-muted-foreground">No backups available.</p>
           ) : (
             <div className="flex gap-2 items-center">
-              <Select value={selectedBackup} onValueChange={setSelectedBackup}>
+              <Select value={selectedBackup} onValueChange={(v) => { if (v !== null) setSelectedBackup(v); }}>
                 <SelectTrigger className="flex-1 text-xs">
                   <SelectValue placeholder="Select a backup…" />
                 </SelectTrigger>
