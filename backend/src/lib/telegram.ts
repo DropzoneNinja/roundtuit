@@ -1,8 +1,7 @@
+import https from 'https';
 import { config } from '../config';
 import prisma from './prisma';
 import logger from './logger';
-
-const BASE = () => `https://api.telegram.org/bot${config.TELEGRAM_BOT_TOKEN}`;
 
 export function isEnabled(): boolean {
   return !!config.TELEGRAM_BOT_TOKEN;
@@ -12,13 +11,38 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
+function telegramPost(path: string, body: object): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const payload = JSON.stringify(body);
+    const req = https.request(
+      {
+        hostname: 'api.telegram.org',
+        path: `/bot${config.TELEGRAM_BOT_TOKEN}${path}`,
+        method: 'POST',
+        family: 4,
+        headers: {
+          'Content-Type': 'application/json',
+          'Content-Length': Buffer.byteLength(payload),
+        },
+      },
+      (res) => {
+        let data = '';
+        res.on('data', (chunk) => { data += chunk; });
+        res.on('end', () => {
+          try { resolve(JSON.parse(data)); }
+          catch { resolve(data); }
+        });
+      },
+    );
+    req.on('error', reject);
+    req.write(payload);
+    req.end();
+  });
+}
+
 export async function sendNotification(chatId: string, text: string): Promise<void> {
   try {
-    await fetch(`${BASE()}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ chat_id: chatId, text, parse_mode: 'HTML' }),
-    });
+    await telegramPost('/sendMessage', { chat_id: chatId, text, parse_mode: 'HTML' });
   } catch (err) {
     logger.error({ err, chatId }, 'Telegram sendMessage failed');
   }
@@ -45,12 +69,12 @@ export async function notifyAll(taskTitle: string, message: string): Promise<voi
 }
 
 async function pollOnce(offset: number): Promise<number> {
-  const res = await fetch(`${BASE()}/getUpdates`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ offset, timeout: 0, allowed_updates: ['message'] }),
-  });
-  const data = await res.json() as { ok: boolean; result: Array<{ update_id: number; message?: { text?: string; chat: { id: number } } }> };
+  const data = await telegramPost('/getUpdates', {
+    offset,
+    timeout: 0,
+    allowed_updates: ['message'],
+  }) as { ok: boolean; result: Array<{ update_id: number; message?: { text?: string; chat: { id: number } } }> };
+
   if (!data.ok || !data.result.length) return offset;
 
   for (const update of data.result) {
