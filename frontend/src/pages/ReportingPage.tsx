@@ -234,7 +234,7 @@ export default function ReportingPage() {
                 sparklineColor="#22c55e"
               />
               <StatTile
-                label="Completion Rate"
+                label="Comp Rate"
                 value={`${stats!.completionRate}%`}
                 icon={<TrendingUp className="h-5 w-5 text-emerald-500" />}
                 sparkline={sl?.completionRate}
