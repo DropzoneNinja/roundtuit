@@ -727,35 +727,33 @@ function auditSummary(log: AuditLog): string {
 }
 
 function AuditSection() {
-  const [cursor, setCursor] = useState<string | undefined>(undefined);
-  const [allLogs, setAllLogs] = useState<AuditLog[]>([]);
+  const [extraPages, setExtraPages] = useState<AuditLog[][]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
 
-  const { isLoading, isError } = useQuery({
+  const { data, isLoading, isError } = useQuery({
     queryKey: ['settings', 'audit'],
     queryFn: () => getAuditLog(),
-    select: (data) => {
-      setAllLogs(data.logs);
-      setNextCursor(data.nextCursor);
-      return data;
-    },
   });
+
+  useEffect(() => {
+    setExtraPages([]);
+    setNextCursor(data?.nextCursor ?? null);
+  }, [data]);
+
+  const allLogs = [...(data?.logs ?? []), ...extraPages.flat()];
 
   async function loadMore() {
     if (!nextCursor) return;
     setIsLoadingMore(true);
     try {
-      const data = await getAuditLog(nextCursor);
-      setAllLogs((prev) => [...prev, ...data.logs]);
-      setNextCursor(data.nextCursor);
-      setCursor(data.nextCursor ?? undefined);
+      const more = await getAuditLog(nextCursor);
+      setExtraPages((prev) => [...prev, more.logs]);
+      setNextCursor(more.nextCursor);
     } finally {
       setIsLoadingMore(false);
     }
   }
-
-  void cursor;
 
   return (
     <Card>
