@@ -64,3 +64,7 @@ export async function regenerateTelegramCode(): Promise<{ linkCode: string }> {
   const res = await api.post<{ linkCode: string }>('/api/telegram/regenerate-code');
   return res.data;
 }
+
+export async function testTelegram(): Promise<void> {
+  await api.post('/api/telegram/test');
+}

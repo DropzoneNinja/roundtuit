@@ -34,6 +34,7 @@ import {
   getTelegramStatus,
   unlinkTelegram,
   regenerateTelegramCode,
+  testTelegram,
 } from '@/api/settings';
 import type { AutoBackupConfig, BackupInfo, UserSummary, TelegramStatus } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -593,6 +594,12 @@ function TelegramSection() {
     onError: (err) => toast.error(apiError(err, 'Failed to regenerate code')),
   });
 
+  const testMutation = useMutation({
+    mutationFn: testTelegram,
+    onSuccess: () => toast.success('Test message sent — check your Telegram'),
+    onError: (err) => toast.error(apiError(err, 'Failed to send test message')),
+  });
+
   function copyCode() {
     if (!data?.linkCode) return;
     void navigator.clipboard.writeText(data.linkCode).then(() => {
@@ -620,20 +627,36 @@ function TelegramSection() {
         ) : data?.linked ? (
           <div className="flex items-center justify-between">
             <span className="text-sm text-green-600 font-medium">Linked</span>
-            <Button
-              size="sm"
-              variant="outline"
-              disabled={unlinkMutation.isPending}
-              onClick={() => unlinkMutation.mutate()}
-              className="text-xs"
-            >
-              {unlinkMutation.isPending ? (
-                <Loader2 className="size-3.5 animate-spin" />
-              ) : (
-                <Unlink className="size-3.5" />
-              )}
-              Unlink
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={testMutation.isPending}
+                onClick={() => testMutation.mutate()}
+                className="text-xs"
+              >
+                {testMutation.isPending ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <MessageCircle className="size-3.5" />
+                )}
+                Send Test
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={unlinkMutation.isPending}
+                onClick={() => unlinkMutation.mutate()}
+                className="text-xs"
+              >
+                {unlinkMutation.isPending ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <Unlink className="size-3.5" />
+                )}
+                Unlink
+              </Button>
+            </div>
           </div>
         ) : (
           <div className="space-y-3">

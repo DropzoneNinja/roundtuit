@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { config } from '../config';
 import prisma from '../lib/prisma';
 import { authenticate } from '../middleware/authenticate';
+import { sendNotification } from '../lib/telegram';
 
 const router = Router();
 
@@ -51,6 +52,20 @@ router.post('/regenerate-code', async (req: Request, res: Response, next: NextFu
     const linkCode = crypto.randomBytes(4).toString('hex');
     await prisma.user.update({ where: { id: req.user!.id }, data: { telegramLinkCode: linkCode } });
     res.json({ linkCode });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.post('/test', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const user = await prisma.user.findUniqueOrThrow({ where: { id: req.user!.id } });
+    if (!user.telegramChatId) {
+      res.status(400).json({ error: 'Telegram not linked' });
+      return;
+    }
+    await sendNotification(user.telegramChatId, 'TUIT: Test message — Telegram notifications are working!');
+    res.json({ success: true });
   } catch (err) {
     next(err);
   }
