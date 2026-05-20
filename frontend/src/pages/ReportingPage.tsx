@@ -441,7 +441,7 @@ export default function ReportingPage() {
                   <XAxis dataKey="month" tick={{ fontSize: 11 }} tickLine={false} axisLine={false} />
                   <YAxis tick={{ fontSize: 11 }} tickLine={false} axisLine={false} width={24} unit="d" />
                   <Tooltip
-                    formatter={(v: number) => [`${v} days`, 'Avg to complete']}
+                    formatter={(v) => [`${v} days`, 'Avg to complete']}
                     contentStyle={{ fontSize: 12, borderRadius: 6 }}
                   />
                   <Line

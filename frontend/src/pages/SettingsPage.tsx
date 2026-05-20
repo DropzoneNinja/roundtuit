@@ -581,6 +581,8 @@ function ReportingLinkCard() {
   );
 }
 
+declare const __APP_VERSION__: string;
+
 export default function SettingsPage() {
   useEffect(() => {
     document.title = 'Settings · RoundTuit';
@@ -593,6 +595,7 @@ export default function SettingsPage() {
       <PasswordSection />
       <BackupSection />
       <RestoreSection />
+      <p className="text-xs text-muted-foreground text-center pb-2">v{__APP_VERSION__}</p>
     </div>
   );
 }
