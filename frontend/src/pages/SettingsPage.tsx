@@ -15,6 +15,7 @@ import {
   Copy,
   Check,
   Upload,
+  BarChart2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
@@ -560,6 +561,26 @@ function RestoreSection() {
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
+function ReportingLinkCard() {
+  const navigate = useNavigate();
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <BarChart2 className="size-4 text-muted-foreground" />
+            <CardTitle className="text-base">Reporting</CardTitle>
+          </div>
+          <Button size="sm" variant="outline" onClick={() => void navigate('/reporting')}>
+            View Dashboard
+          </Button>
+        </div>
+        <CardDescription>Task completion statistics, timeliness, and breakdowns.</CardDescription>
+      </CardHeader>
+    </Card>
+  );
+}
+
 export default function SettingsPage() {
   useEffect(() => {
     document.title = 'Settings · RoundTuit';
@@ -568,6 +589,7 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6">
       <h1 className="font-semibold text-lg">Settings</h1>
+      <ReportingLinkCard />
       <PasswordSection />
       <BackupSection />
       <RestoreSection />

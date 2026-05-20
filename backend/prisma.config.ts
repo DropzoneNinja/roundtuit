@@ -13,6 +13,6 @@ export default defineConfig({
     },
   },
   migrations: {
-    seed: "ts-node --transpile-only prisma/seed.ts",
+    seed: "node_modules/.bin/jiti prisma/seed.ts",
   },
 });

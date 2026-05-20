@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import type { Task, Importance, TaskStatus } from '@/types';
+import type { Task, Importance, TaskStatus, TaskStats, TaskTimelineEntry, TaskSparklines } from '@/types';
 
 export interface CreateTaskData {
   title: string;
@@ -33,4 +33,19 @@ export async function updateTask(id: string, data: UpdateTaskData): Promise<Task
 
 export async function deleteTask(id: string): Promise<void> {
   await api.delete(`/api/tasks/${id}`);
+}
+
+export async function getTaskStats(): Promise<TaskStats> {
+  const res = await api.get<TaskStats>('/api/tasks/stats');
+  return res.data;
+}
+
+export async function getTaskSparklines(): Promise<TaskSparklines> {
+  const res = await api.get<TaskSparklines>('/api/tasks/sparklines');
+  return res.data;
+}
+
+export async function getTaskTimeline(): Promise<TaskTimelineEntry[]> {
+  const res = await api.get<TaskTimelineEntry[]>('/api/tasks/timeline');
+  return res.data;
 }

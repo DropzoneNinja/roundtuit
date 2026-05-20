@@ -7,6 +7,7 @@ import RegisterPage from '@/pages/RegisterPage';
 import DashboardPage from '@/pages/DashboardPage';
 import SettingsPage from '@/pages/SettingsPage';
 import ChangePasswordPage from '@/pages/ChangePasswordPage';
+import ReportingPage from '@/pages/ReportingPage';
 
 export const router = createBrowserRouter([
   {
@@ -18,6 +19,7 @@ export const router = createBrowserRouter([
           { path: '/', element: <DashboardPage /> },
           { path: '/settings', element: <SettingsPage /> },
           { path: '/change-password', element: <ChangePasswordPage /> },
+          { path: '/reporting', element: <ReportingPage /> },
         ],
       },
     ],
