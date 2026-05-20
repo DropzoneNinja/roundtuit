@@ -19,7 +19,8 @@ export default function AppLayout() {
   const navigate = useNavigate();
   const location = useLocation();
   const { resolvedTheme, setTheme } = useTheme();
-  const isSettings = location.pathname === '/settings';
+  const backDestination: Record<string, string> = { '/settings': '/', '/audit': '/settings' };
+  const backTarget = backDestination[location.pathname];
   const [calendarOpen, setCalendarOpen] = useState(false);
 
   async function handleLogout() {
@@ -40,11 +41,11 @@ export default function AppLayout() {
       <header className="border-b border-border">
         <div className="max-w-2xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            {isSettings ? (
+            {backTarget ? (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => void navigate('/')}
+                onClick={() => void navigate(backTarget)}
                 className="gap-1.5 px-2"
               >
                 <ArrowLeft className="size-4" />
