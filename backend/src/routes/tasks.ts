@@ -93,7 +93,14 @@ router.get('/sparklines', async (req: Request, res: Response, next: NextFunction
     const importanceDaily = (imp: string) =>
       days.map(day => {
         const end = endOf(day);
-        return tasks.filter(t => t.importance === imp && t.createdAt >= day && t.createdAt <= end).length;
+        return tasks.filter(t => t.importance === imp && t.createdAt <= end).length;
+      });
+
+    // For each status, count tasks currently in that status that existed on each day
+    const statusDaily = (status: string) =>
+      days.map(day => {
+        const end = endOf(day);
+        return tasks.filter(t => t.status === status && t.createdAt <= end).length;
       });
 
     res.json({
@@ -106,6 +113,12 @@ router.get('/sparklines', async (req: Request, res: Response, next: NextFunction
       late,
       overdue,
       completionRate,
+      byStatus: {
+        PENDING:   statusDaily('PENDING'),
+        STARTED:   statusDaily('STARTED'),
+        WAITING:   statusDaily('WAITING'),
+        COMPLETED: completedTotal,
+      },
       byImportance: {
         HIGH:   importanceDaily('HIGH'),
         MEDIUM: importanceDaily('MEDIUM'),

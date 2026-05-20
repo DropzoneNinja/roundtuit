@@ -301,28 +301,28 @@ export default function ReportingPage() {
                 label="Pending"
                 value={stats!.byStatus.PENDING}
                 icon={<CircleDashed className="h-5 w-5 text-slate-400" />}
-                sparkline={sl?.open}
+                sparkline={sl?.byStatus.PENDING}
                 sparklineColor="#94a3b8"
               />
               <StatTile
                 label="Started"
                 value={stats!.byStatus.STARTED}
                 icon={<Play className="h-5 w-5 text-blue-500" />}
-                sparkline={sl?.open}
+                sparkline={sl?.byStatus.STARTED}
                 sparklineColor="#3b82f6"
               />
               <StatTile
                 label="Waiting"
                 value={stats!.byStatus.WAITING}
                 icon={<Pause className="h-5 w-5 text-yellow-500" />}
-                sparkline={sl?.open}
+                sparkline={sl?.byStatus.WAITING}
                 sparklineColor="#eab308"
               />
               <StatTile
                 label="Completed"
                 value={stats!.byStatus.COMPLETED}
                 icon={<CheckCircle2 className="h-5 w-5 text-green-500" />}
-                sparkline={sl?.completedTotal}
+                sparkline={sl?.byStatus.COMPLETED}
                 sparklineColor="#22c55e"
               />
             </>

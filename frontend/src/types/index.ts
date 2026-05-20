@@ -41,6 +41,7 @@ export interface TaskSparklines {
   late: number[];
   overdue: number[];
   completionRate: number[];
+  byStatus: { PENDING: number[]; STARTED: number[]; WAITING: number[]; COMPLETED: number[] };
   byImportance: { HIGH: number[]; MEDIUM: number[]; LOW: number[] };
 }
 
