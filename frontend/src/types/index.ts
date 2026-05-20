@@ -29,6 +29,12 @@ export interface BackupsResponse {
   autoBackup: AutoBackupConfig;
 }
 
+export interface TelegramStatus {
+  enabled: boolean;
+  linked: boolean;
+  linkCode: string | null;
+}
+
 export type Importance = 'HIGH' | 'MEDIUM' | 'LOW';
 
 export interface TaskSparklines {

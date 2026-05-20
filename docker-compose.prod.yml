@@ -27,6 +27,7 @@ services:
       PORT: 4000
       FRONTEND_URL: ${FRONTEND_URL:?FRONTEND_URL is required}
       ALLOWED_EMAIL_DOMAINS: ${ALLOWED_EMAIL_DOMAINS:-}
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
     depends_on:
       postgres:
         condition: service_healthy

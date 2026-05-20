@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import type { UserSummary, BackupsResponse, AutoBackupConfig } from '@/types';
+import type { UserSummary, BackupsResponse, AutoBackupConfig, TelegramStatus } from '@/types';
 
 export async function getUsers(): Promise<UserSummary[]> {
   const res = await api.get<UserSummary[]>('/api/settings/users');
@@ -49,4 +49,18 @@ export async function restoreFromFile(file: File): Promise<void> {
   await api.post('/api/settings/restore/upload', text, {
     headers: { 'Content-Type': 'text/plain' },
   });
+}
+
+export async function getTelegramStatus(): Promise<TelegramStatus> {
+  const res = await api.get<TelegramStatus>('/api/telegram/status');
+  return res.data;
+}
+
+export async function unlinkTelegram(): Promise<void> {
+  await api.post('/api/telegram/unlink');
+}
+
+export async function regenerateTelegramCode(): Promise<{ linkCode: string }> {
+  const res = await api.post<{ linkCode: string }>('/api/telegram/regenerate-code');
+  return res.data;
 }

@@ -9,6 +9,7 @@ import logger from './lib/logger';
 import authRouter from './routes/auth';
 import tasksRouter from './routes/tasks';
 import settingsRouter from './routes/settings';
+import telegramRouter from './routes/telegram';
 import { errorHandler } from './middleware/errorHandler';
 import { csrfProtection } from './middleware/csrf';
 
@@ -42,6 +43,7 @@ app.use('/api', csrfProtection);
 
 app.use('/api/auth', authRouter);
 app.use('/api/tasks', tasksRouter);
+app.use('/api/telegram', telegramRouter);
 app.use('/api/settings', express.text({ limit: '100mb', type: ['text/plain', 'application/octet-stream'] }), settingsRouter);
 
 app.use(errorHandler);

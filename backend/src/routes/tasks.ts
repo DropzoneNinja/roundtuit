@@ -3,6 +3,7 @@ import prisma from '../lib/prisma';
 import { authenticate } from '../middleware/authenticate';
 import { createTaskSchema, updateTaskSchema } from '../schemas/task';
 import { sortTasks } from '../lib/taskSort';
+import { notifyOthers } from '../lib/telegram';
 
 const router = Router();
 
@@ -246,6 +247,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
         createdBy: req.user!.id,
       },
     });
+    void notifyOthers(req.user!.id, task.title, `New task [${task.importance}]`);
     res.status(201).json(task);
   } catch (err) {
     next(err);

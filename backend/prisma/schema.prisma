@@ -30,21 +30,26 @@ model User {
   username               String   @unique
   passwordHash           String
   passwordChangeRequired Boolean  @default(false)
+  telegramChatId         String?
+  telegramLinkCode       String?
   createdAt              DateTime @default(now())
   updatedAt              DateTime @updatedAt
   tasks                  Task[]
 }
 
 model Task {
-  id              String     @id @default(cuid())
-  title           String
-  description     String?
-  dueDate         DateTime?
-  importance      Importance @default(MEDIUM)
-  status          TaskStatus @default(PENDING)
-  statusChangedAt DateTime?
-  createdBy       String
-  createdAt       DateTime   @default(now())
-  updatedAt       DateTime   @updatedAt
-  user            User       @relation(fields: [createdBy], references: [id], onDelete: Cascade)
+  id                String     @id @default(cuid())
+  title             String
+  description       String?
+  dueDate           DateTime?
+  importance        Importance @default(MEDIUM)
+  status            TaskStatus @default(PENDING)
+  statusChangedAt   DateTime?
+  reminder2DaysSent Boolean    @default(false)
+  reminder1DaySent  Boolean    @default(false)
+  reminderTodaySent Boolean    @default(false)
+  createdBy         String
+  createdAt         DateTime   @default(now())
+  updatedAt         DateTime   @updatedAt
+  user              User       @relation(fields: [createdBy], references: [id], onDelete: Cascade)
 }

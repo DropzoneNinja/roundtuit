@@ -9,6 +9,7 @@ const envSchema = z.object({
   FRONTEND_URL: z.string().min(1, 'FRONTEND_URL is required'),
   ALLOWED_EMAIL_DOMAINS: z.string().optional(),
   BACKUP_DIR: z.string().default('/app/backups'),
+  TELEGRAM_BOT_TOKEN: z.string().optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

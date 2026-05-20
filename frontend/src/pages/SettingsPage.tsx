@@ -16,6 +16,8 @@ import {
   Check,
   Upload,
   BarChart2,
+  MessageCircle,
+  Unlink,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
@@ -29,8 +31,11 @@ import {
   setAutoBackup,
   restoreFromBackup,
   restoreFromFile,
+  getTelegramStatus,
+  unlinkTelegram,
+  regenerateTelegramCode,
 } from '@/api/settings';
-import type { AutoBackupConfig, BackupInfo, UserSummary } from '@/types';
+import type { AutoBackupConfig, BackupInfo, UserSummary, TelegramStatus } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -559,6 +564,109 @@ function RestoreSection() {
   );
 }
 
+// ── Telegram section ──────────────────────────────────────────────────────────
+
+function TelegramSection() {
+  const queryClient = useQueryClient();
+  const [copied, setCopied] = useState(false);
+
+  const { data, isLoading } = useQuery<TelegramStatus>({
+    queryKey: ['settings', 'telegram'],
+    queryFn: getTelegramStatus,
+  });
+
+  const unlinkMutation = useMutation({
+    mutationFn: unlinkTelegram,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['settings', 'telegram'] });
+      toast.success('Telegram unlinked');
+    },
+    onError: (err) => toast.error(apiError(err, 'Failed to unlink Telegram')),
+  });
+
+  const regenerateMutation = useMutation({
+    mutationFn: regenerateTelegramCode,
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ['settings', 'telegram'] });
+      toast.success('New link code generated');
+    },
+    onError: (err) => toast.error(apiError(err, 'Failed to regenerate code')),
+  });
+
+  function copyCode() {
+    if (!data?.linkCode) return;
+    void navigator.clipboard.writeText(data.linkCode).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  if (!isLoading && data?.enabled === false) return null;
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <MessageCircle className="size-4 text-muted-foreground" />
+          <CardTitle className="text-base">Telegram Notifications</CardTitle>
+        </div>
+        <CardDescription>Get notified about new tasks and due-date reminders.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> Loading…
+          </div>
+        ) : data?.linked ? (
+          <div className="flex items-center justify-between">
+            <span className="text-sm text-green-600 font-medium">Linked</span>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={unlinkMutation.isPending}
+              onClick={() => unlinkMutation.mutate()}
+              className="text-xs"
+            >
+              {unlinkMutation.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Unlink className="size-3.5" />
+              )}
+              Unlink
+            </Button>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              Start a chat with your Telegram bot and send this code to link your account:
+            </p>
+            <div className="flex items-center gap-2 rounded-md border border-border bg-muted px-3 py-2">
+              <code className="flex-1 font-mono text-sm select-all">{data?.linkCode ?? '…'}</code>
+              <Button size="icon" variant="ghost" onClick={copyCode} className="size-7 shrink-0">
+                {copied ? <Check className="size-3.5 text-green-500" /> : <Copy className="size-3.5" />}
+              </Button>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={regenerateMutation.isPending}
+              onClick={() => regenerateMutation.mutate()}
+              className="text-xs"
+            >
+              {regenerateMutation.isPending ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <RefreshCw className="size-3.5" />
+              )}
+              Regenerate Code
+            </Button>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 function ReportingLinkCard() {
@@ -592,6 +700,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <h1 className="font-semibold text-lg">Settings</h1>
       <ReportingLinkCard />
+      <TelegramSection />
       <PasswordSection />
       <BackupSection />
       <RestoreSection />
