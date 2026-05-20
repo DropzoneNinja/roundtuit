@@ -1,7 +1,6 @@
+import { Prisma } from '@prisma/client';
 import prisma from './prisma';
 import logger from './logger';
-
-type AuditDetail = Record<string, unknown>;
 
 export async function writeAudit(
   action: 'CREATE' | 'UPDATE' | 'DELETE',
@@ -9,11 +8,11 @@ export async function writeAudit(
   entityId: string,
   actorId: string,
   actorUsername: string,
-  detail: AuditDetail,
+  detail: Record<string, unknown>,
 ): Promise<void> {
   try {
     await prisma.auditLog.create({
-      data: { action, entity, entityId, actorId, actorUsername, detail },
+      data: { action, entity, entityId, actorId, actorUsername, detail: detail as Prisma.InputJsonValue },
     });
   } catch (err) {
     logger.error({ err }, 'Failed to write audit log');

@@ -252,7 +252,7 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
     void writeAudit('CREATE', 'task', task.id, req.user!.id, req.user!.username, {
       title: task.title,
       importance: task.importance,
-      dueDate: task.dueDate ?? null,
+      dueDate: task.dueDate?.toISOString() ?? null,
     });
     res.status(201).json(task);
   } catch (err) {
@@ -285,8 +285,10 @@ router.put('/:id', async (req: Request<{ id: string }>, res: Response, next: Nex
     const changes: Record<string, { from: unknown; to: unknown }> = {};
     const tracked = ['title', 'description', 'dueDate', 'importance', 'status'] as const;
     for (const field of tracked) {
-      const before = existing[field] instanceof Date ? existing[field].toISOString() : existing[field];
-      const after = task[field] instanceof Date ? task[field].toISOString() : task[field];
+      const rawBefore = existing[field];
+      const rawAfter = task[field];
+      const before = rawBefore instanceof Date ? rawBefore.toISOString() : rawBefore;
+      const after = rawAfter instanceof Date ? rawAfter.toISOString() : rawAfter;
       if (before !== after) changes[field] = { from: before, to: after };
     }
     void writeAudit('UPDATE', 'task', task.id, req.user!.id, req.user!.username, {
