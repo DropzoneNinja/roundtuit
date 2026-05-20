@@ -197,4 +197,26 @@ router.post(
   },
 );
 
+// ── Audit log ─────────────────────────────────────────────────────────────────
+
+router.get('/audit', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 100, 500);
+    const cursor = req.query.cursor as string | undefined;
+
+    const logs = await prisma.auditLog.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: limit + 1,
+      ...(cursor ? { cursor: { id: cursor }, skip: 1 } : {}),
+    });
+
+    const hasMore = logs.length > limit;
+    if (hasMore) logs.pop();
+
+    res.json({ logs, nextCursor: hasMore ? logs[logs.length - 1].id : null });
+  } catch (err) {
+    next(err);
+  }
+});
+
 export default router;

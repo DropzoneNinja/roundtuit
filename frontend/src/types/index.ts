@@ -29,6 +29,22 @@ export interface BackupsResponse {
   autoBackup: AutoBackupConfig;
 }
 
+export interface AuditLog {
+  id: string;
+  action: 'CREATE' | 'UPDATE' | 'DELETE';
+  entity: string;
+  entityId: string;
+  actorId: string;
+  actorUsername: string;
+  detail: Record<string, unknown>;
+  createdAt: string;
+}
+
+export interface AuditLogResponse {
+  logs: AuditLog[];
+  nextCursor: string | null;
+}
+
 export interface TelegramStatus {
   enabled: boolean;
   linked: boolean;

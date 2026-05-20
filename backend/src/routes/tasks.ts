@@ -4,6 +4,7 @@ import { authenticate } from '../middleware/authenticate';
 import { createTaskSchema, updateTaskSchema } from '../schemas/task';
 import { sortTasks } from '../lib/taskSort';
 import { notifyOthers } from '../lib/telegram';
+import { writeAudit } from '../lib/audit';
 
 const router = Router();
 
@@ -248,6 +249,11 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
       },
     });
     void notifyOthers(req.user!.id, task.title, `New task [${task.importance}]`);
+    void writeAudit('CREATE', 'task', task.id, req.user!.id, req.user!.username, {
+      title: task.title,
+      importance: task.importance,
+      dueDate: task.dueDate ?? null,
+    });
     res.status(201).json(task);
   } catch (err) {
     next(err);
@@ -275,6 +281,19 @@ router.put('/:id', async (req: Request<{ id: string }>, res: Response, next: Nex
         ...(statusChangedAt !== undefined ? { statusChangedAt } : {}),
       },
     });
+
+    const changes: Record<string, { from: unknown; to: unknown }> = {};
+    const tracked = ['title', 'description', 'dueDate', 'importance', 'status'] as const;
+    for (const field of tracked) {
+      const before = existing[field] instanceof Date ? existing[field].toISOString() : existing[field];
+      const after = task[field] instanceof Date ? task[field].toISOString() : task[field];
+      if (before !== after) changes[field] = { from: before, to: after };
+    }
+    void writeAudit('UPDATE', 'task', task.id, req.user!.id, req.user!.username, {
+      title: task.title,
+      changes,
+    });
+
     res.json(task);
   } catch (err) {
     next(err);
@@ -292,6 +311,9 @@ router.delete('/:id', async (req: Request<{ id: string }>, res: Response, next: 
     }
 
     await prisma.task.delete({ where: { id } });
+    void writeAudit('DELETE', 'task', id, req.user!.id, req.user!.username, {
+      title: existing.title,
+    });
     res.status(204).send();
   } catch (err) {
     next(err);

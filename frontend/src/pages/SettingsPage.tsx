@@ -18,6 +18,8 @@ import {
   BarChart2,
   MessageCircle,
   Unlink,
+  ClipboardList,
+  ChevronDown,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
@@ -35,8 +37,9 @@ import {
   unlinkTelegram,
   regenerateTelegramCode,
   testTelegram,
+  getAuditLog,
 } from '@/api/settings';
-import type { AutoBackupConfig, BackupInfo, UserSummary, TelegramStatus } from '@/types';
+import type { AutoBackupConfig, BackupInfo, UserSummary, TelegramStatus, AuditLog } from '@/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -690,6 +693,142 @@ function TelegramSection() {
   );
 }
 
+// ── Audit log section ─────────────────────────────────────────────────────────
+
+const ACTION_STYLES: Record<string, string> = {
+  CREATE: 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-400',
+  UPDATE: 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400',
+  DELETE: 'bg-red-100 text-red-700 dark:bg-red-900/40 dark:text-red-400',
+};
+
+function auditSummary(log: AuditLog): string {
+  const d = log.detail as Record<string, unknown>;
+  if (log.action === 'CREATE') {
+    const parts: string[] = [];
+    if (d.importance) parts.push(String(d.importance).toLowerCase());
+    if (d.dueDate) parts.push(`due ${new Date(String(d.dueDate)).toLocaleDateString()}`);
+    return parts.length ? `(${parts.join(', ')})` : '';
+  }
+  if (log.action === 'UPDATE') {
+    const changes = d.changes as Record<string, { from: unknown; to: unknown }> | undefined;
+    if (!changes) return '';
+    return Object.entries(changes)
+      .map(([field, { from, to }]) => {
+        if (field === 'dueDate') {
+          const f = from ? new Date(String(from)).toLocaleDateString() : 'none';
+          const t = to ? new Date(String(to)).toLocaleDateString() : 'none';
+          return `due: ${f} → ${t}`;
+        }
+        return `${field}: ${String(from)} → ${String(to)}`;
+      })
+      .join(', ');
+  }
+  return '';
+}
+
+function AuditSection() {
+  const [cursor, setCursor] = useState<string | undefined>(undefined);
+  const [allLogs, setAllLogs] = useState<AuditLog[]>([]);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+
+  const { isLoading, isError } = useQuery({
+    queryKey: ['settings', 'audit'],
+    queryFn: () => getAuditLog(),
+    select: (data) => {
+      setAllLogs(data.logs);
+      setNextCursor(data.nextCursor);
+      return data;
+    },
+  });
+
+  async function loadMore() {
+    if (!nextCursor) return;
+    setIsLoadingMore(true);
+    try {
+      const data = await getAuditLog(nextCursor);
+      setAllLogs((prev) => [...prev, ...data.logs]);
+      setNextCursor(data.nextCursor);
+      setCursor(data.nextCursor ?? undefined);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }
+
+  void cursor;
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center gap-2">
+          <ClipboardList className="size-4 text-muted-foreground" />
+          <CardTitle className="text-base">Audit Log</CardTitle>
+        </div>
+        <CardDescription>Record of all task changes — who did what and when.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        {isLoading ? (
+          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+            <Loader2 className="size-4 animate-spin" /> Loading…
+          </div>
+        ) : isError ? (
+          <p className="text-sm text-destructive">Failed to load audit log.</p>
+        ) : allLogs.length === 0 ? (
+          <p className="text-sm text-muted-foreground">No activity recorded yet.</p>
+        ) : (
+          <div className="space-y-1">
+            {allLogs.map((log) => (
+              <div
+                key={log.id}
+                className="flex items-start gap-3 rounded-lg px-2 py-1.5 hover:bg-muted/50 transition-colors"
+              >
+                <span
+                  className={`mt-0.5 shrink-0 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${ACTION_STYLES[log.action] ?? ''}`}
+                >
+                  {log.action}
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm leading-snug">
+                    <span className="font-medium">{log.actorUsername}</span>
+                    {' '}
+                    <span className="text-muted-foreground">
+                      {log.action === 'CREATE' ? 'created' : log.action === 'DELETE' ? 'deleted' : 'updated'}
+                    </span>
+                    {' '}
+                    <span className="font-medium">{String((log.detail as Record<string, unknown>).title ?? log.entityId)}</span>
+                    {' '}
+                    <span className="text-muted-foreground text-xs">{auditSummary(log)}</span>
+                  </p>
+                  <p className="text-[11px] text-muted-foreground">
+                    {new Date(log.createdAt).toLocaleString(undefined, {
+                      year: 'numeric', month: 'short', day: 'numeric',
+                      hour: '2-digit', minute: '2-digit',
+                    })}
+                  </p>
+                </div>
+              </div>
+            ))}
+            {nextCursor && (
+              <button
+                onClick={() => void loadMore()}
+                disabled={isLoadingMore}
+                className="mt-2 flex w-full items-center justify-center gap-1 rounded-md py-1.5 text-xs text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+              >
+                {isLoadingMore ? (
+                  <Loader2 className="size-3.5 animate-spin" />
+                ) : (
+                  <ChevronDown className="size-3.5" />
+                )}
+                Load more
+              </button>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 function ReportingLinkCard() {
@@ -723,6 +862,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <h1 className="font-semibold text-lg">Settings</h1>
       <ReportingLinkCard />
+      <AuditSection />
       <TelegramSection />
       <PasswordSection />
       <BackupSection />

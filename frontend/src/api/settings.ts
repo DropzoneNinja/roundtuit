@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import type { UserSummary, BackupsResponse, AutoBackupConfig, TelegramStatus } from '@/types';
+import type { UserSummary, BackupsResponse, AutoBackupConfig, TelegramStatus, AuditLogResponse } from '@/types';
 
 export async function getUsers(): Promise<UserSummary[]> {
   const res = await api.get<UserSummary[]>('/api/settings/users');
@@ -67,4 +67,11 @@ export async function regenerateTelegramCode(): Promise<{ linkCode: string }> {
 
 export async function testTelegram(): Promise<void> {
   await api.post('/api/telegram/test');
+}
+
+export async function getAuditLog(cursor?: string): Promise<AuditLogResponse> {
+  const res = await api.get<AuditLogResponse>('/api/settings/audit', {
+    params: { limit: 100, ...(cursor ? { cursor } : {}) },
+  });
+  return res.data;
 }

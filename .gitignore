@@ -36,3 +36,4 @@ backups/
 
 # Claude Code
 .claude/
+.env.swp

@@ -37,6 +37,19 @@ model User {
   tasks                  Task[]
 }
 
+model AuditLog {
+  id            String   @id @default(cuid())
+  action        String
+  entity        String
+  entityId      String
+  actorId       String
+  actorUsername String
+  detail        Json
+  createdAt     DateTime @default(now())
+
+  @@index([createdAt(sort: Desc)])
+}
+
 model Task {
   id                String     @id @default(cuid())
   title             String
