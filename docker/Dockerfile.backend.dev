@@ -7,4 +7,4 @@ COPY backend/prisma.config.ts ./
 COPY backend/tsconfig.json ./
 RUN npm ci && npx prisma generate
 EXPOSE 4000
-CMD ["sh", "-c", "npx prisma generate && npx ts-node-dev --respawn --transpile-only src/server.ts"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma generate && npx ts-node-dev --respawn --transpile-only src/server.ts"]
