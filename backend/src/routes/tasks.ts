@@ -1,10 +1,12 @@
 import { Router, Request, Response, NextFunction } from 'express';
+import multer from 'multer';
 import prisma from '../lib/prisma';
 import { authenticate } from '../middleware/authenticate';
 import { createTaskSchema, updateTaskSchema } from '../schemas/task';
 import { sortTasks } from '../lib/taskSort';
 import { notifyOthers } from '../lib/telegram';
 import { writeAudit } from '../lib/audit';
+import { uploadMiddleware, deleteImageFile } from '../lib/upload';
 
 const router = Router();
 
@@ -260,6 +262,74 @@ router.post('/', async (req: Request, res: Response, next: NextFunction) => {
   }
 });
 
+router.post('/:id/image', (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+  uploadMiddleware.single('image')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      res.status(400).json({ error: err.message });
+      return;
+    }
+    if (err) { next(err); return; }
+    void handleImageUpload(req as Request<{ id: string }>, res, next);
+  });
+});
+
+async function handleImageUpload(req: Request<{ id: string }>, res: Response, next: NextFunction) {
+  try {
+    const { id } = req.params;
+
+    const existing = await prisma.task.findUnique({ where: { id } });
+    if (!existing) {
+      res.status(404).json({ error: 'Task not found' });
+      return;
+    }
+
+    if (!req.file) {
+      res.status(400).json({ error: 'No image file provided' });
+      return;
+    }
+
+    if (existing.imageUrl) {
+      await deleteImageFile(existing.imageUrl);
+    }
+
+    const imageUrl = `/uploads/${req.file.filename}`;
+    const task = await prisma.task.update({ where: { id }, data: { imageUrl } });
+    void writeAudit('UPDATE', 'task', task.id, req.user!.id, req.user!.username, {
+      title: task.title,
+      changes: { imageUrl: { from: existing.imageUrl, to: imageUrl } },
+    });
+    res.json(task);
+  } catch (err) {
+    next(err);
+  }
+}
+
+router.delete('/:id/image', async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
+  try {
+    const { id } = req.params;
+
+    const existing = await prisma.task.findUnique({ where: { id } });
+    if (!existing) {
+      res.status(404).json({ error: 'Task not found' });
+      return;
+    }
+    if (!existing.imageUrl) {
+      res.status(404).json({ error: 'No image to remove' });
+      return;
+    }
+
+    await deleteImageFile(existing.imageUrl);
+    const task = await prisma.task.update({ where: { id }, data: { imageUrl: null } });
+    void writeAudit('UPDATE', 'task', task.id, req.user!.id, req.user!.username, {
+      title: task.title,
+      changes: { imageUrl: { from: existing.imageUrl, to: null } },
+    });
+    res.json(task);
+  } catch (err) {
+    next(err);
+  }
+});
+
 router.put('/:id', async (req: Request<{ id: string }>, res: Response, next: NextFunction) => {
   try {
     const { id } = req.params;
@@ -312,6 +382,7 @@ router.delete('/:id', async (req: Request<{ id: string }>, res: Response, next: 
       return;
     }
 
+    if (existing.imageUrl) await deleteImageFile(existing.imageUrl);
     await prisma.task.delete({ where: { id } });
     void writeAudit('DELETE', 'task', id, req.user!.id, req.user!.username, {
       title: existing.title,

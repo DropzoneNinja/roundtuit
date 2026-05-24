@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
-import { getTasks, createTask, updateTask, deleteTask } from '@/api/tasks';
+import { getTasks, createTask, updateTask, deleteTask, uploadTaskImage, deleteTaskImage } from '@/api/tasks';
 import type { CreateTaskData, UpdateTaskData } from '@/api/tasks';
 import type { Task, TaskStatus } from '@/types';
 
@@ -30,6 +30,22 @@ export function useDeleteTask() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => deleteTask(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: TASKS_KEY }),
+  });
+}
+
+export function useUploadTaskImage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, file }: { id: string; file: File }) => uploadTaskImage(id, file),
+    onSuccess: () => qc.invalidateQueries({ queryKey: TASKS_KEY }),
+  });
+}
+
+export function useDeleteTaskImage() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => deleteTaskImage(id),
     onSuccess: () => qc.invalidateQueries({ queryKey: TASKS_KEY }),
   });
 }

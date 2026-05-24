@@ -58,6 +58,7 @@ model Task {
   importance        Importance @default(MEDIUM)
   status            TaskStatus @default(PENDING)
   statusChangedAt   DateTime?
+  imageUrl          String?
   reminder2DaysSent Boolean    @default(false)
   reminder1DaySent  Boolean    @default(false)
   reminderTodaySent Boolean    @default(false)

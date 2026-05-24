@@ -33,6 +33,10 @@ postgres/data/
 
 # Backups
 backups/
+backup/
+
+# Media
+uploads/
 
 # Claude Code
 .claude/

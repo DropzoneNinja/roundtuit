@@ -8,6 +8,7 @@ import { TaskList } from '@/components/tasks/TaskList';
 import { AddTaskDialog } from '@/components/tasks/AddTaskDialog';
 import { EditTaskDialog } from '@/components/tasks/EditTaskDialog';
 import { DeleteTaskConfirmDialog } from '@/components/tasks/DeleteTaskConfirmDialog';
+import { TaskDetailDialog } from '@/components/tasks/TaskDetailDialog';
 
 export default function DashboardPage() {
   const { data: tasks = [], isLoading, isError, refetch } = useTasks();
@@ -16,6 +17,7 @@ export default function DashboardPage() {
   const [addOpen, setAddOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Task | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Task | null>(null);
+  const [detailTargetId, setDetailTargetId] = useState<string | null>(null);
 
   useEffect(() => {
     document.title = 'Tasks · RoundTuit';
@@ -23,6 +25,7 @@ export default function DashboardPage() {
 
   const sorted = sortTasks(tasks);
   const incompleteCount = tasks.filter((t) => t.status !== 'COMPLETED').length;
+  const detailTask = tasks.find((t) => t.id === detailTargetId) ?? null;
 
   return (
     <>
@@ -41,6 +44,7 @@ export default function DashboardPage() {
         onStatusChange={(id, status) => setTaskStatus.mutate({ id, status })}
         onEdit={setEditTarget}
         onDelete={setDeleteTarget}
+        onViewDetail={(task) => setDetailTargetId(task.id)}
       />
 
       <Button
@@ -60,6 +64,14 @@ export default function DashboardPage() {
           onOpenChange={(open) => {
             if (!open) setEditTarget(null);
           }}
+        />
+      )}
+
+      {detailTask && (
+        <TaskDetailDialog
+          task={detailTask}
+          open
+          onClose={() => setDetailTargetId(null)}
         />
       )}
 

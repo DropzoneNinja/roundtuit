@@ -49,6 +49,7 @@ interface TaskListProps {
   onStatusChange: (id: string, status: TaskStatus) => void;
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
+  onViewDetail: (task: Task) => void;
 }
 
 export function TaskList({
@@ -59,6 +60,7 @@ export function TaskList({
   onStatusChange,
   onEdit,
   onDelete,
+  onViewDetail,
 }: TaskListProps) {
   const [completedOpen, setCompletedOpen] = useState(false);
 
@@ -114,6 +116,7 @@ export function TaskList({
               onStatusChange={onStatusChange}
               onEdit={onEdit}
               onDelete={onDelete}
+              onViewDetail={onViewDetail}
             />
           ))}
         </div>
@@ -141,6 +144,7 @@ export function TaskList({
                   onStatusChange={onStatusChange}
                   onEdit={onEdit}
                   onDelete={onDelete}
+                  onViewDetail={onViewDetail}
                 />
               ))}
             </div>

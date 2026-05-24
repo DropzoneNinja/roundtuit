@@ -98,6 +98,7 @@ export interface Task {
   importance: Importance;
   status: TaskStatus;
   statusChangedAt?: string | null;
+  imageUrl?: string | null;
   createdBy: string;
   createdAt: string;
   updatedAt: string;

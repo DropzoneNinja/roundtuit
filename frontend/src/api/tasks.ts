@@ -35,6 +35,18 @@ export async function deleteTask(id: string): Promise<void> {
   await api.delete(`/api/tasks/${id}`);
 }
 
+export async function uploadTaskImage(id: string, file: File): Promise<Task> {
+  const formData = new FormData();
+  formData.append('image', file);
+  const res = await api.post<Task>(`/api/tasks/${id}/image`, formData);
+  return res.data;
+}
+
+export async function deleteTaskImage(id: string): Promise<Task> {
+  const res = await api.delete<Task>(`/api/tasks/${id}/image`);
+  return res.data;
+}
+
 export async function getTaskStats(): Promise<TaskStats> {
   const res = await api.get<TaskStats>('/api/tasks/stats');
   return res.data;

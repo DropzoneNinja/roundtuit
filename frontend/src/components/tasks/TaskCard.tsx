@@ -24,6 +24,7 @@ interface TaskCardProps {
   onStatusChange: (id: string, status: TaskStatus) => void;
   onEdit: (task: Task) => void;
   onDelete: (task: Task) => void;
+  onViewDetail: (task: Task) => void;
 }
 
 const STATUS_CONFIG: Record<TaskStatus, {
@@ -63,7 +64,7 @@ const importanceFullLabel: Record<string, string> = {
 
 const STATUS_ORDER: TaskStatus[] = ['PENDING', 'STARTED', 'WAITING', 'COMPLETED'];
 
-export function TaskCard({ task, showDaysLeft, onStatusChange, onEdit, onDelete }: TaskCardProps) {
+export function TaskCard({ task, showDaysLeft, onStatusChange, onEdit, onDelete, onViewDetail }: TaskCardProps) {
   const current = STATUS_CONFIG[task.status];
   const CurrentIcon = current.icon;
   const isCompleted = task.status === 'COMPLETED';
@@ -131,9 +132,10 @@ export function TaskCard({ task, showDaysLeft, onStatusChange, onEdit, onDelete 
         <div className="flex-1 min-w-0">
           <p
             className={cn(
-              'font-medium text-sm leading-snug',
+              'font-medium text-sm leading-snug cursor-pointer hover:underline',
               isCompleted && 'line-through text-muted-foreground',
             )}
+            onClick={() => onViewDetail(task)}
           >
             {task.title}
           </p>
@@ -169,7 +171,21 @@ export function TaskCard({ task, showDaysLeft, onStatusChange, onEdit, onDelete 
           )}
         </div>
 
-        <div className="flex gap-0.5 shrink-0">
+        <div className="flex items-center gap-0.5 shrink-0">
+          {task.imageUrl && (
+            <button
+              type="button"
+              onClick={() => onViewDetail(task)}
+              className="mr-1"
+              aria-label={`View image for "${task.title}"`}
+            >
+              <img
+                src={task.imageUrl}
+                alt=""
+                className="size-8 rounded object-cover"
+              />
+            </button>
+          )}
           <Button
             variant="ghost"
             size="icon"

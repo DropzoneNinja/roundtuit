@@ -1,10 +1,11 @@
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { toast } from 'sonner';
 import axios from 'axios';
 import { Loader2 } from 'lucide-react';
 import { taskFormSchema, type TaskFormData } from '@/lib/taskSchemas';
-import { useCreateTask } from '@/hooks/useTasks';
+import { useCreateTask, useUploadTaskImage } from '@/hooks/useTasks';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -38,21 +39,41 @@ interface AddTaskDialogProps {
 
 export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
   const createTask = useCreateTask();
+  const uploadImage = useUploadTaskImage();
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   const form = useForm<TaskFormData>({
     resolver: zodResolver(taskFormSchema),
     defaultValues: { title: '', description: '', dueDate: '', importance: 'MEDIUM' },
   });
 
+  function handleClose(isOpen: boolean) {
+    if (!isOpen) {
+      form.reset();
+      setImageFile(null);
+    }
+    onOpenChange(isOpen);
+  }
+
   async function onSubmit(data: TaskFormData) {
     try {
-      await createTask.mutateAsync({
+      const task = await createTask.mutateAsync({
         title: data.title,
         description: data.description || undefined,
         dueDate: data.dueDate ? new Date(data.dueDate).toISOString() : undefined,
         importance: data.importance,
       });
+
+      if (imageFile) {
+        try {
+          await uploadImage.mutateAsync({ id: task.id, file: imageFile });
+        } catch {
+          toast.error('Task created but image upload failed');
+        }
+      }
+
       form.reset();
+      setImageFile(null);
       onOpenChange(false);
     } catch (error) {
       const message = axios.isAxiosError(error)
@@ -62,8 +83,10 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
     }
   }
 
+  const isPending = createTask.isPending || uploadImage.isPending;
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>New task</DialogTitle>
@@ -131,10 +154,22 @@ export function AddTaskDialog({ open, onOpenChange }: AddTaskDialogProps) {
                 )}
               />
             </div>
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium">Image (optional)</label>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={(e) => setImageFile(e.target.files?.[0] ?? null)}
+                className="w-full text-sm file:mr-3 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-sm file:bg-muted file:text-foreground hover:file:bg-muted/80 cursor-pointer"
+              />
+              {imageFile && (
+                <p className="text-xs text-muted-foreground">{imageFile.name}</p>
+              )}
+            </div>
             <DialogFooter>
-              <Button type="submit" disabled={createTask.isPending}>
-                {createTask.isPending && <Loader2 className="size-4 animate-spin" />}
-                {createTask.isPending ? 'Adding…' : 'Add task'}
+              <Button type="submit" disabled={isPending}>
+                {isPending && <Loader2 className="size-4 animate-spin" />}
+                {isPending ? 'Adding…' : 'Add task'}
               </Button>
             </DialogFooter>
           </form>

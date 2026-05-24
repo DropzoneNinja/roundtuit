@@ -3,6 +3,7 @@ import argon2 from 'argon2';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import multer from 'multer';
 import { z } from 'zod';
 import { passwordSchema } from '../schemas/auth';
 import prisma from '../lib/prisma';
@@ -160,42 +161,51 @@ router.post('/restore/from-backup', async (req: Request, res: Response, next: Ne
   }
 });
 
-// Restore from an uploaded SQL file (sent as plain text)
-router.post(
-  '/restore/upload',
-  (req: Request, res: Response, next: NextFunction) => {
-    // Accept text/plain or application/octet-stream for the raw SQL
-    const contentType = req.headers['content-type'] ?? '';
-    if (!contentType.includes('text/plain') && !contentType.includes('application/octet-stream')) {
-      res.status(400).json({ error: 'Expected Content-Type: text/plain' });
+// Restore from an uploaded .zip backup file
+const restoreUpload = multer({
+  storage: multer.diskStorage({
+    destination: (_req, _file, cb) => {
+      fs.mkdirSync(config.BACKUP_DIR, { recursive: true });
+      cb(null, config.BACKUP_DIR);
+    },
+    filename: (_req, _file, cb) => cb(null, `restore-upload-${Date.now()}.zip`),
+  }),
+  limits: { fileSize: 500 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (file.originalname.endsWith('.zip')) cb(null, true);
+    else cb(new Error('Only .zip backup files are accepted'));
+  },
+});
+
+router.post('/restore/upload', (req: Request, res: Response, next: NextFunction) => {
+  restoreUpload.single('backup')(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      res.status(400).json({ error: err.message });
       return;
     }
-    next();
-  },
-  async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const sql = req.body as string;
-      if (!sql || typeof sql !== 'string' || sql.trim().length === 0) {
-        res.status(400).json({ error: 'Empty file uploaded' });
-        return;
-      }
+    if (err) { next(err); return; }
+    void handleRestoreUpload(req as Request & { file?: Express.Multer.File }, res, next);
+  });
+});
 
-      await fs.promises.mkdir(config.BACKUP_DIR, { recursive: true });
-      const tmpPath = path.join(config.BACKUP_DIR, `restore-upload-${Date.now()}.sql`);
-
-      try {
-        await fs.promises.writeFile(tmpPath, sql, 'utf-8');
-        await restoreFromPath(tmpPath);
-      } finally {
-        await fs.promises.unlink(tmpPath).catch(() => undefined);
-      }
-
-      res.json({ success: true });
-    } catch (err) {
-      next(err);
-    }
-  },
-);
+async function handleRestoreUpload(
+  req: Request & { file?: Express.Multer.File },
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  if (!req.file) {
+    res.status(400).json({ error: 'No file uploaded' });
+    return;
+  }
+  try {
+    await restoreFromPath(req.file.path);
+    res.json({ success: true });
+  } catch (err) {
+    next(err);
+  } finally {
+    await fs.promises.unlink(req.file.path).catch(() => undefined);
+  }
+}
 
 // ── Audit log ─────────────────────────────────────────────────────────────────
 

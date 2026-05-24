@@ -216,6 +216,72 @@ function PasswordSection() {
   );
 }
 
+// ── Backup list dialog ────────────────────────────────────────────────────────
+
+interface BackupListDialogProps {
+  open: boolean;
+  onClose: () => void;
+  backups: BackupInfo[];
+  isLoading: boolean;
+  isError: boolean;
+  onDelete: (filename: string) => void;
+  isDeleting: boolean;
+}
+
+function BackupListDialog({ open, onClose, backups, isLoading, isError, onDelete, isDeleting }: BackupListDialogProps) {
+  return (
+    <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Saved Backups</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-1">
+          {isLoading && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" /> Loading…
+            </div>
+          )}
+          {isError && <p className="text-sm text-destructive">Failed to load backups.</p>}
+          {!isLoading && backups.length === 0 && (
+            <p className="text-sm text-muted-foreground">No backups yet.</p>
+          )}
+          {backups.map((b: BackupInfo) => (
+            <div
+              key={b.filename}
+              className="flex items-center justify-between rounded-lg border border-border px-3 py-2 gap-2"
+            >
+              <div className="min-w-0">
+                <p className="text-xs font-mono truncate text-muted-foreground">{b.filename}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatDate(b.createdAt)} · {formatBytes(b.size)}
+                </p>
+              </div>
+              <div className="flex gap-1 shrink-0">
+                <a
+                  href={backupDownloadUrl(b.filename)}
+                  download={b.filename}
+                  className="inline-flex items-center justify-center size-7 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
+                >
+                  <Download className="size-3.5" />
+                </a>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="size-7 text-destructive hover:text-destructive"
+                  disabled={isDeleting}
+                  onClick={() => onDelete(b.filename)}
+                >
+                  <Trash2 className="size-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ── Backup section ────────────────────────────────────────────────────────────
 
 function BackupSection() {
@@ -255,6 +321,8 @@ function BackupSection() {
     },
     onError: (err) => toast.error(apiError(err, 'Failed to save auto-backup settings')),
   });
+
+  const [showList, setShowList] = useState(false);
 
   const hourOptions = Array.from({ length: 24 }, (_, i) => ({
     value: String(i),
@@ -332,53 +400,26 @@ function BackupSection() {
           </div>
         </div>
 
-        {/* Backup list */}
-        <div className="space-y-2">
-          <p className="text-sm font-medium">Saved Backups</p>
-          {isLoading && (
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Loader2 className="size-4 animate-spin" /> Loading…
-            </div>
+        <Button variant="outline" size="sm" onClick={() => setShowList(true)}>
+          <HardDrive className="size-4" />
+          List Backups
+          {backups.length > 0 && (
+            <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-xs font-medium">
+              {backups.length}
+            </span>
           )}
-          {isError && (
-            <p className="text-sm text-destructive">Failed to load backups.</p>
-          )}
-          {!isLoading && backups.length === 0 && (
-            <p className="text-sm text-muted-foreground">No backups yet.</p>
-          )}
-          {backups.map((b: BackupInfo) => (
-            <div
-              key={b.filename}
-              className="flex items-center justify-between rounded-lg border border-border px-3 py-2 gap-2"
-            >
-              <div className="min-w-0">
-                <p className="text-xs font-mono truncate text-muted-foreground">{b.filename}</p>
-                <p className="text-xs text-muted-foreground">
-                  {formatDate(b.createdAt)} · {formatBytes(b.size)}
-                </p>
-              </div>
-              <div className="flex gap-1 shrink-0">
-                <a
-                  href={backupDownloadUrl(b.filename)}
-                  download={b.filename}
-                  className="inline-flex items-center justify-center size-7 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors"
-                >
-                  <Download className="size-3.5" />
-                </a>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  className="size-7 text-destructive hover:text-destructive"
-                  disabled={deleteMutation.isPending}
-                  onClick={() => deleteMutation.mutate(b.filename)}
-                >
-                  <Trash2 className="size-3.5" />
-                </Button>
-              </div>
-            </div>
-          ))}
-        </div>
+        </Button>
       </CardContent>
+
+      <BackupListDialog
+        open={showList}
+        onClose={() => setShowList(false)}
+        backups={backups}
+        isLoading={isLoading}
+        isError={isError}
+        onDelete={(filename) => deleteMutation.mutate(filename)}
+        isDeleting={deleteMutation.isPending}
+      />
     </Card>
   );
 }
@@ -459,8 +500,8 @@ function RestoreSection() {
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0] ?? null;
-    if (file && !file.name.endsWith('.sql')) {
-      toast.error('Only .sql files are supported');
+    if (file && !file.name.endsWith('.zip')) {
+      toast.error('Only .zip backup files are supported');
       e.target.value = '';
       return;
     }
@@ -518,7 +559,7 @@ function RestoreSection() {
             <input
               ref={fileInputRef}
               type="file"
-              accept=".sql"
+              accept=".zip"
               className="hidden"
               onChange={handleFileChange}
             />
@@ -528,7 +569,7 @@ function RestoreSection() {
               onClick={() => fileInputRef.current?.click()}
             >
               <Upload className="size-3.5" />
-              Choose .sql file
+              Choose .zip file
             </Button>
             {selectedFile && (
               <span className="text-xs text-muted-foreground truncate max-w-[160px]">

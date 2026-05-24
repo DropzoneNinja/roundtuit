@@ -19,6 +19,7 @@ services:
     image: ghcr.io/dropzoneninja/roundtuit-backend:latest
     volumes:
       - ${BACKUP_DIR:?BACKUP_DIR is required}:/app/backups
+      - ${UPLOAD_DIR:?UPLOAD_DIR is required}:/app/uploads
     environment:
       DATABASE_URL: ${DATABASE_URL:?DATABASE_URL is required}
       JWT_SECRET: ${JWT_SECRET:?JWT_SECRET is required}
@@ -28,6 +29,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:?FRONTEND_URL is required}
       ALLOWED_EMAIL_DOMAINS: ${ALLOWED_EMAIL_DOMAINS:-}
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
+      UPLOAD_DIR: /app/uploads
     depends_on:
       postgres:
         condition: service_healthy

@@ -45,10 +45,9 @@ export async function restoreFromBackup(filename: string): Promise<void> {
 }
 
 export async function restoreFromFile(file: File): Promise<void> {
-  const text = await file.text();
-  await api.post('/api/settings/restore/upload', text, {
-    headers: { 'Content-Type': 'text/plain' },
-  });
+  const fd = new FormData();
+  fd.append('backup', file);
+  await api.post('/api/settings/restore/upload', fd);
 }
 
 export async function getTelegramStatus(): Promise<TelegramStatus> {

@@ -24,6 +24,7 @@ app.use(cors({ origin: config.FRONTEND_URL, credentials: true }));
 app.use(cookieParser());
 app.use(express.json());
 app.use(pinoHttp({ logger }));
+app.use('/uploads', express.static(config.UPLOAD_DIR));
 
 // General API rate limit — applied before CSRF and route handlers
 const apiLimiter = rateLimit({
@@ -44,7 +45,7 @@ app.use('/api', csrfProtection);
 app.use('/api/auth', authRouter);
 app.use('/api/tasks', tasksRouter);
 app.use('/api/telegram', telegramRouter);
-app.use('/api/settings', express.text({ limit: '100mb', type: ['text/plain', 'application/octet-stream'] }), settingsRouter);
+app.use('/api/settings', settingsRouter);
 
 app.use(errorHandler);
 
