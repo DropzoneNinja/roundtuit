@@ -148,9 +148,9 @@ export function TaskCard({ task, showDaysLeft, onStatusChange, onEdit, onDelete,
             {task.dueDate && (
               <Badge
                 variant="outline"
-                className={cn('text-xs', dueDateBadgeClass(task.dueDate))}
+                className={cn('text-xs', dueDateBadgeClass(task.dueDate, task.status === 'COMPLETED' ? task.statusChangedAt : null))}
               >
-                {formatDueDate(task.dueDate)}
+                {formatDueDate(task.dueDate, task.status === 'COMPLETED' ? task.statusChangedAt : null)}
               </Badge>
             )}
             <TooltipProvider delay={300}>

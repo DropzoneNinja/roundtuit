@@ -97,8 +97,8 @@ export function TaskDetailDialog({ task, open, onClose }: Props) {
 
           <div className="flex gap-1.5 flex-wrap">
             {task.dueDate && (
-              <Badge variant="outline" className={cn('text-xs', dueDateBadgeClass(task.dueDate))}>
-                {formatDueDate(task.dueDate)}
+              <Badge variant="outline" className={cn('text-xs', dueDateBadgeClass(task.dueDate, task.status === 'COMPLETED' ? task.statusChangedAt : null))}>
+                {formatDueDate(task.dueDate, task.status === 'COMPLETED' ? task.statusChangedAt : null)}
               </Badge>
             )}
             <Badge className={cn('text-xs border-0', importanceColor(task.importance))}>

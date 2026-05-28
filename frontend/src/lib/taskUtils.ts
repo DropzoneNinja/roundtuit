@@ -86,15 +86,15 @@ export function sortTasks(tasks: Task[]): Task[] {
   });
 }
 
-export function formatDueDate(dateStr: string): string {
-  const todayUTC = new Date();
-  todayUTC.setUTCHours(0, 0, 0, 0);
+export function formatDueDate(dateStr: string, referenceDate?: string | null): string {
+  const refUTC = referenceDate ? new Date(referenceDate) : new Date();
+  refUTC.setUTCHours(0, 0, 0, 0);
 
   const dateUTC = new Date(dateStr);
   dateUTC.setUTCHours(0, 0, 0, 0);
 
   const diffDays = Math.round(
-    (dateUTC.getTime() - todayUTC.getTime()) / (1000 * 60 * 60 * 24),
+    (dateUTC.getTime() - refUTC.getTime()) / (1000 * 60 * 60 * 24),
   );
 
   if (diffDays < 0) return 'Overdue';
@@ -107,15 +107,15 @@ export function formatDueDate(dateStr: string): string {
   });
 }
 
-export function dueDateBadgeClass(dateStr: string): string {
-  const todayUTC = new Date();
-  todayUTC.setUTCHours(0, 0, 0, 0);
+export function dueDateBadgeClass(dateStr: string, referenceDate?: string | null): string {
+  const refUTC = referenceDate ? new Date(referenceDate) : new Date();
+  refUTC.setUTCHours(0, 0, 0, 0);
 
   const dateUTC = new Date(dateStr);
   dateUTC.setUTCHours(0, 0, 0, 0);
 
   const diffDays = Math.round(
-    (dateUTC.getTime() - todayUTC.getTime()) / (1000 * 60 * 60 * 24),
+    (dateUTC.getTime() - refUTC.getTime()) / (1000 * 60 * 60 * 24),
   );
 
   if (diffDays < 0)
