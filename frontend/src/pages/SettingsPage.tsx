@@ -19,6 +19,7 @@ import {
   MessageCircle,
   Unlink,
   ClipboardList,
+  Plus,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
@@ -36,8 +37,12 @@ import {
   unlinkTelegram,
   regenerateTelegramCode,
   testTelegram,
+  getApiKeys,
+  createApiKey,
+  deleteApiKey,
 } from '@/api/settings';
-import type { AutoBackupConfig, BackupInfo, UserSummary, TelegramStatus } from '@/types';
+import type { AutoBackupConfig, BackupInfo, UserSummary, TelegramStatus, ApiKey, CreatedApiKey } from '@/types';
+import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -732,6 +737,150 @@ function TelegramSection() {
   );
 }
 
+// ── API Keys ──────────────────────────────────────────────────────────────────
+
+interface NewApiKeyDialogProps {
+  createdKey: CreatedApiKey;
+  onClose: () => void;
+}
+
+function NewApiKeyDialog({ createdKey, onClose }: NewApiKeyDialogProps) {
+  const [copied, setCopied] = useState(false);
+
+  function copy() {
+    void navigator.clipboard.writeText(createdKey.token).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>API Key Created</DialogTitle>
+          <DialogDescription>
+            Your key <strong>{createdKey.name}</strong> is ready. Copy it now — it won't be shown again.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="flex items-center gap-2 rounded-md border border-border bg-muted px-3 py-2">
+          <code className="flex-1 font-mono text-xs break-all select-all">{createdKey.token}</code>
+          <Button size="icon" variant="ghost" onClick={copy} className="size-7 shrink-0">
+            {copied ? <Check className="size-3.5 text-green-500" /> : <Copy className="size-3.5" />}
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Use this token as <code className="font-mono">Authorization: Bearer &lt;token&gt;</code> in API requests.
+        </p>
+        <DialogFooter>
+          <Button onClick={onClose}>Done</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function ApiKeySection() {
+  const queryClient = useQueryClient();
+  const [name, setName] = useState('');
+  const [createdKey, setCreatedKey] = useState<CreatedApiKey | null>(null);
+
+  const { data: keys = [], isLoading } = useQuery({
+    queryKey: ['settings', 'api-keys'],
+    queryFn: getApiKeys,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: () => createApiKey(name.trim()),
+    onSuccess: (data) => {
+      setName('');
+      setCreatedKey(data);
+      void queryClient.invalidateQueries({ queryKey: ['settings', 'api-keys'] });
+    },
+    onError: (err) => toast.error(apiError(err, 'Failed to create API key')),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteApiKey(id),
+    onSuccess: () => {
+      toast.success('API key revoked');
+      void queryClient.invalidateQueries({ queryKey: ['settings', 'api-keys'] });
+    },
+    onError: (err) => toast.error(apiError(err, 'Failed to revoke API key')),
+  });
+
+  return (
+    <>
+      {createdKey && (
+        <NewApiKeyDialog createdKey={createdKey} onClose={() => setCreatedKey(null)} />
+      )}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <KeyRound className="size-4 text-muted-foreground" />
+            <CardTitle className="text-base">API Keys</CardTitle>
+          </div>
+          <CardDescription>Personal access tokens for programmatic API access.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex gap-2">
+            <Input
+              placeholder="Key name (e.g. Home Assistant)"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && name.trim()) createMutation.mutate();
+              }}
+              className="max-w-xs"
+            />
+            <Button
+              size="sm"
+              onClick={() => createMutation.mutate()}
+              disabled={!name.trim() || createMutation.isPending}
+            >
+              {createMutation.isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Plus className="size-4" />
+              )}
+              Generate
+            </Button>
+          </div>
+
+          {isLoading && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+
+          {keys.length > 0 && (
+            <ul className="divide-y divide-border rounded-md border border-border text-sm">
+              {keys.map((key: ApiKey) => (
+                <li key={key.id} className="flex items-center justify-between gap-4 px-3 py-2">
+                  <div className="min-w-0">
+                    <p className="font-medium truncate">{key.name}</p>
+                    <p className="text-xs text-muted-foreground font-mono">{key.prefix}…</p>
+                  </div>
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="text-xs text-muted-foreground hidden sm:block">
+                      {key.lastUsedAt ? `Used ${formatDate(key.lastUsedAt)}` : 'Never used'}
+                    </span>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="size-7 text-destructive hover:text-destructive"
+                      onClick={() => deleteMutation.mutate(key.id)}
+                      disabled={deleteMutation.isPending}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </Button>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
+        </CardContent>
+      </Card>
+    </>
+  );
+}
+
 // ── Audit log card ────────────────────────────────────────────────────────────
 
 function AuditLogCard() {
@@ -788,6 +937,7 @@ export default function SettingsPage() {
       <h1 className="font-semibold text-lg">Settings</h1>
       <ReportingLinkCard />
       <AuditLogCard />
+      <ApiKeySection />
       <TelegramSection />
       <PasswordSection />
       <BackupSection />

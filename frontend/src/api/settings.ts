@@ -1,5 +1,5 @@
 import { api } from '@/lib/api';
-import type { UserSummary, BackupsResponse, AutoBackupConfig, TelegramStatus, AuditLogResponse } from '@/types';
+import type { UserSummary, BackupsResponse, AutoBackupConfig, TelegramStatus, AuditLogResponse, ApiKey, CreatedApiKey } from '@/types';
 
 export async function getUsers(): Promise<UserSummary[]> {
   const res = await api.get<UserSummary[]>('/api/settings/users');
@@ -73,4 +73,18 @@ export async function getAuditLog(cursor?: string): Promise<AuditLogResponse> {
     params: { limit: 100, ...(cursor ? { cursor } : {}) },
   });
   return res.data;
+}
+
+export async function getApiKeys(): Promise<ApiKey[]> {
+  const res = await api.get<ApiKey[]>('/api/settings/api-keys');
+  return res.data;
+}
+
+export async function createApiKey(name: string): Promise<CreatedApiKey> {
+  const res = await api.post<CreatedApiKey>('/api/settings/api-keys', { name });
+  return res.data;
+}
+
+export async function deleteApiKey(id: string): Promise<void> {
+  await api.delete(`/api/settings/api-keys/${id}`);
 }

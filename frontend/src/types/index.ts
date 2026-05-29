@@ -88,6 +88,19 @@ export interface TaskStats {
   byImportance: { HIGH: number; MEDIUM: number; LOW: number };
 }
 
+export interface ApiKey {
+  id: string;
+  name: string;
+  prefix: string;
+  lastUsedAt: string | null;
+  expiresAt: string | null;
+  createdAt: string;
+}
+
+export interface CreatedApiKey extends ApiKey {
+  token: string;
+}
+
 export type TaskStatus = 'PENDING' | 'STARTED' | 'WAITING' | 'COMPLETED';
 
 export interface Task {
