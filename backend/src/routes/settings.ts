@@ -11,6 +11,7 @@ import { authenticate } from '../middleware/authenticate';
 import { config } from '../config';
 import { createBackup, listBackups, resolveBackupPath, deleteBackup, restoreFromPath } from '../lib/backup';
 import { getAutoBackupConfig, setAutoBackupConfig } from '../lib/autoBackup';
+import { writeAudit } from '../lib/audit';
 
 const router = Router();
 
@@ -206,6 +207,85 @@ async function handleRestoreUpload(
     await fs.promises.unlink(req.file.path).catch(() => undefined);
   }
 }
+
+// ── API Keys ──────────────────────────────────────────────────────────────────
+
+const createApiKeySchema = z.object({
+  name: z.string().min(1).max(100),
+  expiresAt: z.string().datetime().optional(),
+});
+
+router.post('/api-keys', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const { name, expiresAt } = createApiKeySchema.parse(req.body);
+
+    const rawToken = 'rtpat_' + crypto.randomBytes(32).toString('hex');
+    const keyHash = crypto.createHash('sha256').update(rawToken).digest('hex');
+    const prefix = rawToken.slice(0, 12);
+
+    const apiKey = await prisma.apiKey.create({
+      data: {
+        userId: req.user!.id,
+        name,
+        keyHash,
+        prefix,
+        expiresAt: expiresAt ? new Date(expiresAt) : null,
+      },
+    });
+
+    void writeAudit('CREATE', 'apiKey', apiKey.id, req.user!.id, req.user!.username, { name });
+
+    res.status(201).json({
+      id: apiKey.id,
+      name: apiKey.name,
+      prefix: apiKey.prefix,
+      expiresAt: apiKey.expiresAt,
+      createdAt: apiKey.createdAt,
+      token: rawToken,
+    });
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.get('/api-keys', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const keys = await prisma.apiKey.findMany({
+      where: { userId: req.user!.id },
+      select: {
+        id: true,
+        name: true,
+        prefix: true,
+        lastUsedAt: true,
+        expiresAt: true,
+        createdAt: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+    res.json(keys);
+  } catch (err) {
+    next(err);
+  }
+});
+
+router.delete('/api-keys/:id', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const existing = await prisma.apiKey.findUnique({ where: { id: req.params.id } });
+
+    if (!existing || existing.userId !== req.user!.id) {
+      res.status(404).json({ error: 'API key not found' });
+      return;
+    }
+
+    await prisma.apiKey.delete({ where: { id: req.params.id } });
+
+    void writeAudit('DELETE', 'apiKey', req.params.id, req.user!.id, req.user!.username, { name: existing.name });
+
+    res.status(204).send();
+  } catch (err) {
+    next(err);
+  }
+});
 
 // ── Audit log ─────────────────────────────────────────────────────────────────
 
