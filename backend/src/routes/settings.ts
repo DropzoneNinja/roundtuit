@@ -270,16 +270,17 @@ router.get('/api-keys', async (req: Request, res: Response, next: NextFunction) 
 
 router.delete('/api-keys/:id', async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const existing = await prisma.apiKey.findUnique({ where: { id: req.params.id } });
+    const id = req.params.id as string;
+    const existing = await prisma.apiKey.findUnique({ where: { id } });
 
     if (!existing || existing.userId !== req.user!.id) {
       res.status(404).json({ error: 'API key not found' });
       return;
     }
 
-    await prisma.apiKey.delete({ where: { id: req.params.id } });
+    await prisma.apiKey.delete({ where: { id } });
 
-    void writeAudit('DELETE', 'apiKey', req.params.id, req.user!.id, req.user!.username, { name: existing.name });
+    void writeAudit('DELETE', 'apiKey', id, req.user!.id, req.user!.username, { name: existing.name });
 
     res.status(204).send();
   } catch (err) {
